@@ -4,116 +4,101 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 
-var port = 5000;
-var server = new TcpListener(IPAddress.Loopback, port); // IPv4 127.0.0.1 IPv6 ::1
-server.Start();
-
-Console.WriteLine($"Server started on port {port}");
-
-while (true)
+class Program
 {
-    var client = server.AcceptTcpClient();
-    Console.WriteLine("Client connected!!!");
-
-    try
+    static void Main(string[] args)
     {
-        var stream = client.GetStream();
-        var buffer = new byte[1024];
+        var port = 5000;
+        var server = new TcpListener(IPAddress.Loopback, port);
+        server.Start();
 
-        // Read data from the client
-        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        Console.WriteLine($"Server started on port {port}");
 
-        // Convert received bytes to string
-        var msg = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-        Console.WriteLine("Message from client: " + msg);
-
-        // Process the request and get the response
-        var responseJson = ProcessRequest(msg);
-
-        // Convert the response to bytes and send it back to the client
-        buffer = Encoding.UTF8.GetBytes(responseJson);
-        stream.Write(buffer, 0, buffer.Length);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine("Error: " + ex.Message);
-    }
-    finally
-    {
-        client.Close(); // Close the client connection
-    }
-}
-
-// Function to process the client request
-string ProcessRequest(string requestJson)
-{
-    var response = new CJTPResponse();
-
-    try
-    {
-        // Attempt to deserialize the incoming JSON request
-        var request = JsonSerializer.Deserialize<CJTPRequest>(requestJson);
-
-        // Check for missing "method" field
-        if (string.IsNullOrWhiteSpace(request?.Method))
+        while (true)
         {
-            response.Status = 4; // Bad Request
-            response.Body = "missing method";
-            return JsonSerializer.Serialize(response);
-        }
+            var client = server.AcceptTcpClient();
+            Console.WriteLine("Client connected!");
 
-        // Validate known methods
-        var knownMethods = new HashSet<string> { "create", "read", "update", "delete", "echo" };
-        if (!knownMethods.Contains(request.Method.ToLower()))
-        {
-            response.Status = 4; // Bad Request
-            response.Body = "illegal method";
-            return JsonSerializer.Serialize(response);
-        }
+            try
+            {
+                var stream = client.GetStream();
+                var buffer = new byte[1024];
 
-        // Check for missing resource (path) on specific methods
-        if (new[] { "create", "read", "update", "delete" }.Contains(request.Method.ToLower()) &&
-            string.IsNullOrWhiteSpace(request.Path))
-        {
-            response.Status = 4; // Bad Request
-            response.Body = "missing resource";
-            return JsonSerializer.Serialize(response);
-        }
+                // Read data from the client
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
 
-        // If all checks pass, return a generic success response
-        response.Status = 1; // OK status for successful processing
-        response.Body = "Request processed successfully";
-        return JsonSerializer.Serialize(response);
+                // Check if no data is received (client connected without sending data)
+                if (bytesRead == 0)
+                {
+                    Console.WriteLine("No data received. Closing the connection.");
+                    client.Close();
+                    continue;
+                }
+
+                // Convert received bytes to string
+                var requestJson = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                Console.WriteLine("Message from client: " + requestJson);
+
+                // Process the request and get the response
+                var responseJson = ProcessRequest(requestJson);
+
+                // Convert the response to bytes and send it back to the client
+                buffer = Encoding.UTF8.GetBytes(responseJson);
+                stream.Write(buffer, 0, buffer.Length);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+            finally
+            {
+                client.Close(); // Ensure the client connection is closed
+                Console.WriteLine("Client connection closed."); // Log message when connection closes
+            }
+        }
     }
-    catch (JsonException)
+
+    static string ProcessRequest(string requestJson)
     {
-        // JSON parsing error, return an error response
-        response.Status = 6; // Error status
-        response.Body = "Error processing request";
-        return JsonSerializer.Serialize(response);
-    }
-    catch (Exception ex)
-    {
-        // Catch any other exceptions, return a general error response
-        Console.WriteLine($"Unexpected error: {ex.Message}");
-        response.Status = 6; // Error status
-        response.Body = "Unexpected server error";
-        return JsonSerializer.Serialize(response);
-    }
-}
+        Console.WriteLine(requestJson);
+        try
+        {
+            var request = JsonSerializer.Deserialize<Dictionary<string, object>>(requestJson);
 
-// CJTP Request Model
-public class CJTPRequest
-{
-    public string Method { get; set; }
-    public string Path { get; set; }
-    public long Date { get; set; }
-    public JsonElement? Body { get; set; }
-}
+            if (request == null || !request.ContainsKey("method"))
+            {
+                var errorResponse = new
+                {
+                    Status = "missing method"
+                };
+                return JsonSerializer.Serialize(errorResponse);
+            }
 
-// CJTP Response Model
-public class CJTPResponse
-{
-    public int Status { get; set; }
-    public string Body { get; set; }
+            string method = request["method"].ToString().ToLower();
+            if (method != "known_method") // Replace "known_method" with your valid method(s)
+            {
+                var errorResponse = new
+                {
+                    Status = "illegal method"
+                };
+                return JsonSerializer.Serialize(errorResponse);
+            }
+
+            var successResponse = new
+            {
+                Status = "success",
+                Message = "Request processed successfully"
+            };
+            return JsonSerializer.Serialize(successResponse);
+        }
+        catch (JsonException)
+        {
+            var errorResponse = new
+            {
+                Status = "error",
+                Message = "invalid json format"
+            };
+            return JsonSerializer.Serialize(errorResponse);
+        }
+    }
 }

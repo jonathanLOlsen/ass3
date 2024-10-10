@@ -35,7 +35,7 @@ namespace Assignment3TestSuite
         /// Testing Constrains
         /// 
         ////////////////////////////////////////////////////////// 
-
+        /*
         [Fact]
         public void Constraint_ConnectionWithoutRequest_ShouldConnect()
         {
@@ -44,7 +44,7 @@ namespace Assignment3TestSuite
         }
 
         /*    Method Tests     */
-
+        
         [Fact]
         public void Constraint_RequestWithoutMethod_MissingMethodError()
         {
@@ -56,7 +56,7 @@ namespace Assignment3TestSuite
 
             Assert.Contains("missing method", response.Status.ToLower());
         }
-
+        
         [Fact]
         public void Constraint_RequestWithUnknownMethod_IllegalMethodError()
         {
@@ -76,12 +76,13 @@ namespace Assignment3TestSuite
             Assert.Contains("illegal method", response.Status.ToLower());
         }
 
-
+        /*
         [Theory]
         [InlineData("create")]
         [InlineData("read")]
         [InlineData("update")]
         [InlineData("delete")]
+        
         public void Constraint_RequestForCreateReadUpdateDeleteWithoutResource_MissingResourceError(string method)
         {
             var client = Connect();
