@@ -60,45 +60,39 @@ class Program
 
     static string ProcessRequest(string requestJson)
     {
-        Console.WriteLine(requestJson);
         try
         {
             var request = JsonSerializer.Deserialize<Dictionary<string, object>>(requestJson);
 
             if (request == null || !request.ContainsKey("method"))
             {
-                var errorResponse = new
-                {
-                    Status = "missing method"
-                };
-                return JsonSerializer.Serialize(errorResponse);
+                return JsonSerializer.Serialize(new { Status = "missing method" });
             }
 
             string method = request["method"].ToString().ToLower();
-            if (method != "known_method") // Replace "known_method" with your valid method(s)
+
+            // Define methods that require a "resource" field
+            var methodsRequiringResource = new HashSet<string> { "create", "read", "update", "delete" };
+
+            // Check if "resource" is missing for specific methods
+            if (methodsRequiringResource.Contains(method) && !request.ContainsKey("resource"))
             {
-                var errorResponse = new
-                {
-                    Status = "illegal method"
-                };
-                return JsonSerializer.Serialize(errorResponse);
+                return JsonSerializer.Serialize(new { Status = "missing resource" });
             }
 
-            var successResponse = new
+            // Handle other method cases or general success response
+            if (method == "known_method") // Replace "known_method" with your known valid methods
             {
-                Status = "success",
-                Message = "Request processed successfully"
-            };
-            return JsonSerializer.Serialize(successResponse);
+                return JsonSerializer.Serialize(new { Status = "success", Message = "Request processed successfully" });
+            }
+            else
+            {
+                return JsonSerializer.Serialize(new { Status = "illegal method" });
+            }
         }
         catch (JsonException)
         {
-            var errorResponse = new
-            {
-                Status = "error",
-                Message = "invalid json format"
-            };
-            return JsonSerializer.Serialize(errorResponse);
+            return JsonSerializer.Serialize(new { Status = "error", Message = "invalid json format" });
         }
     }
 }

@@ -76,7 +76,7 @@ namespace Assignment3TestSuite
             Assert.Contains("illegal method", response.Status.ToLower());
         }
 
-        /*
+        
         [Theory]
         [InlineData("create")]
         [InlineData("read")]
