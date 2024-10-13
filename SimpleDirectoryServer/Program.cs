@@ -41,7 +41,7 @@ class Program
 
                 // Process the request and get the response
                 var responseJson = ProcessRequest(requestJson);
-
+                Console.WriteLine("Message to client: " + responseJson);
 
                 // Convert the response to bytes and send it back to the client
                 buffer = Encoding.UTF8.GetBytes(responseJson);
@@ -63,7 +63,34 @@ class Program
     {
         try
         {
+            // Parse JSON string into a Request object
+            var request = Request.Parse(requestJson);
+
+            // Validate the request and get a Response object
+            var response = request.Validate();
+
+            // Return the response as a JSON string
+            return JsonSerializer.Serialize(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Handle JSON parsing error or invalid request format
+            var errorResponse = new Response { Status = $"6 Error: {ex.Message}" };
+            return JsonSerializer.Serialize(errorResponse);
+        }
+    }
+}
+
+
+
+/*
+    static string ProcessRequest(string requestJson)
+    {
+        try
+        {
             var request = JsonSerializer.Deserialize<Dictionary<string, object>>(requestJson);
+
+            Console.WriteLine(request + "jason object");
 
             if (request == null || !request.ContainsKey("method"))
             {
@@ -75,6 +102,12 @@ class Program
             // Define methods that require a "resource" field
             var methodsRequiringResource = new HashSet<string> { "create", "read", "update", "delete" };
 
+            if(method == "echo")
+            {
+                Console.WriteLine("did we get in here !!");
+                return JsonSerializer.Serialize(new { Status = "hello world" });
+            }
+
             if (!IsValidUnixTimestamp(request["date"].ToString()))
             {
                 return JsonSerializer.Serialize(new { Status = "illegal date" });
@@ -83,7 +116,7 @@ class Program
             // Check if "resource" is missing for specific methods
             if (methodsRequiringResource.Contains(method) && !request.ContainsKey("resource"))
             {
-                return JsonSerializer.Serialize(new { Status = "missing resource" });
+                return JsonSerializer.Serialize(new { Status = "missing resource, missing body, illegal body" });
             }
 
             // Handle other method cases or general success response
@@ -93,7 +126,7 @@ class Program
             }
             else
             {
-                return JsonSerializer.Serialize(new { Status = "illegal method" });
+                return JsonSerializer.Serialize(new { Status = "illegal method, missing body" });
             }
         }
         catch (JsonException)
@@ -109,8 +142,89 @@ class Program
         if (long.TryParse(date, out long unixTime))
         {
             DateTimeOffset dateTime = DateTimeOffset.FromUnixTimeSeconds(unixTime);
-            return unixTime > 0 && dateTime.Year >= 1800 && dateTime.Year <= 2060;
+            return unixTime > 0 && dateTime.Year >= 1800 && dateTime.Year <= 2150;
         }
         return false;
     }
+}*/
+
+
+public class Request
+{
+    public string Method { get; set; }
+    public string Path { get; set; }
+    public long Date { get; set; }
+    public JsonElement? Body { get; set; }
+
+    // Factory method to parse JSON into a Request object
+    public static Request Parse(string json)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<Request>(json);
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("Invalid JSON format");
+        }
+    }
+
+    // Validate fields and accumulate error messages
+    public Response Validate()
+    {
+        var errors = new List<string>();
+
+        // Check if "method" is missing or invalid
+        if (string.IsNullOrWhiteSpace(Method))
+        {
+            errors.Add("missing method");
+        }
+        else if (!IsValidMethod(Method))
+        {
+            errors.Add("illegal method");
+        }
+
+        // Check if "path" is missing for methods other than "echo"
+        if (string.IsNullOrWhiteSpace(Path) && Method.ToLower() != "echo")
+        {
+            errors.Add("missing path");
+        }
+
+        // Check if "date" is missing or invalid
+        if (Date <= 0 || !IsValidUnixTimestamp(Date))
+        {
+            errors.Add("missing date or illegal date");
+        }
+
+        // Additional validation for "Body" if needed
+        if (Body == null)
+        {
+            errors.Add("missing body");
+        }
+
+        // If there are any errors, create a 4 Bad Request response
+        if (errors.Count > 0)
+        {
+            return new Response { Status = $"4 Bad Request: {string.Join(", ", errors)}" };
+        }
+
+        // Return a success response if no errors
+        return new Response { Status = "1 Ok" };
+    }
+
+    // Helper to check if the Date is a valid Unix timestamp
+    private static bool IsValidUnixTimestamp(long date) => date > 0;
+
+    // Helper to check if Method is valid
+    private static bool IsValidMethod(string method)
+    {
+        var validMethods = new HashSet<string> { "create", "read", "update", "delete", "echo" };
+        return validMethods.Contains(method.ToLower());
+    }
+}
+
+public class Response
+{
+    public string Status { get; set; } 
+    public object Body { get; set; } 
 }
