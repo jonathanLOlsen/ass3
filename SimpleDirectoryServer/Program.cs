@@ -41,7 +41,7 @@ class Program
 
                 // Process the request and get the response
                 var responseJson = ProcessRequest(requestJson);
-                Console.WriteLine(requestJson + "requestJson");
+
 
                 // Convert the response to bytes and send it back to the client
                 buffer = Encoding.UTF8.GetBytes(responseJson);
@@ -61,7 +61,6 @@ class Program
 
     static string ProcessRequest(string requestJson)
     {
-        Console.WriteLine(requestJson);
         try
         {
             var request = JsonSerializer.Deserialize<Dictionary<string, object>>(requestJson);
@@ -102,6 +101,7 @@ class Program
             return JsonSerializer.Serialize(new { Status = "error", Message = "invalid json format" });
         }
     }
+
     // Helper method to validate Unix timestamp
     private static bool IsValidUnixTimestamp(string date)
     {

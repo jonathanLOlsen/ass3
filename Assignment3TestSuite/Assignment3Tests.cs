@@ -44,7 +44,11 @@ namespace Assignment3TestSuite
         }
 
         /*    Method Tests     */
+<<<<<<< HEAD
         /*
+=======
+        
+>>>>>>> c7afce7359150d8ad3d287905099968bae0a000f
         [Fact]
         public void Constraint_RequestWithoutMethod_MissingMethodError()
         {
@@ -56,7 +60,11 @@ namespace Assignment3TestSuite
 
             Assert.Contains("missing method", response.Status.ToLower());
         }
+<<<<<<< HEAD
         */
+=======
+        
+>>>>>>> c7afce7359150d8ad3d287905099968bae0a000f
         [Fact]
         public void Constraint_RequestWithUnknownMethod_IllegalMethodError()
         {
@@ -75,7 +83,11 @@ namespace Assignment3TestSuite
 
             Assert.Contains("illegal method", response.Status.ToLower());
         }
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> c7afce7359150d8ad3d287905099968bae0a000f
         
         [Theory]
         [InlineData("create")]
@@ -101,7 +113,11 @@ namespace Assignment3TestSuite
         }
         
         /* Date Tests    */
+<<<<<<< HEAD
         /*
+=======
+/*
+>>>>>>> c7afce7359150d8ad3d287905099968bae0a000f
         [Fact]
         public void Constraint_RequestWithoutDate_MissingDateError()
         {
@@ -113,7 +129,11 @@ namespace Assignment3TestSuite
 
             Assert.Contains("missing date", response.Status.ToLower());
         }
+<<<<<<< HEAD
         */
+=======
+
+>>>>>>> c7afce7359150d8ad3d287905099968bae0a000f
         [Fact]
         public void Constraint_RequestWhereDateIsNotUnixTime_IllegalDateError()
         {
