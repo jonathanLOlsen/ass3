@@ -6,6 +6,14 @@ using System.Text.Json;
 
 class Program
 {
+
+    static List<Dictionary<string, object>> categories = new List<Dictionary<string, object>>()
+    {
+        new Dictionary<string, object> { { "cid", 1 }, { "name", "Beverages" } },
+        new Dictionary<string, object> { { "cid", 2 }, { "name", "Condiments" } },
+        new Dictionary<string, object> { { "cid", 3 }, { "name", "Confections" } }
+    };
+
     static void Main(string[] args)
     {
         var port = 5000;
@@ -63,39 +71,66 @@ class Program
     {
         try
         {
-            // Parse JSON into a Dictionary
             var requestData = JsonSerializer.Deserialize<Dictionary<string, object>>(requestJson);
-
+            
             // Check if the request data is empty (e.g., "{}")
             if (requestData == null || requestData.Count == 0)
             {
-                Console.WriteLine("Received empty request data.");
+                // Return an error indicating that the "method" is missing
                 return JsonSerializer.Serialize(new Response { Status = "4 Bad Request: missing method, missing date", Body = null });
             }
 
-
-            // Debugging: Check parsed request data
-            Console.WriteLine("Parsed request data: " + JsonSerializer.Serialize(requestData));
-
-            // Validate the request data
             var response = Validate(requestData);
 
-            // Return the response as a JSON string
+            if (response.Status.StartsWith("4") || response.Status.StartsWith("6"))
+                return JsonSerializer.Serialize(response);
+
+            string method = requestData["method"].ToString().ToLower();
+            string path = requestData.ContainsKey("path") ? requestData["path"].ToString() : null;
+
+            switch (method)
+            {
+                case "create":
+                    if (path == "/api/categories")
+                        response = CreateCategory(requestData);
+                    else
+                        response = new Response { Status = "4 Bad Request" };
+                    break;
+
+                case "read":
+                    response = ReadCategory(path);
+                    break;
+
+                case "update":
+                    response = UpdateCategory(path, requestData);
+                    break;
+
+                case "delete":
+                    response = DeleteCategory(path);
+                    break;
+
+                case "echo":
+                    response.Status = "1 Ok";
+                    response.Body = requestData.ContainsKey("body") ? requestData["body"] : null;
+                    break;
+
+                default:
+                    response.Status = "4 Bad Request: invalid method";
+                    break;
+            }
+
             return JsonSerializer.Serialize(response);
         }
         catch (JsonException)
         {
-            // Handle invalid JSON format
-            var errorResponse = new Response { Status = "4 Bad Request: invalid json format", Body = null };
-            return JsonSerializer.Serialize(errorResponse);
+            return JsonSerializer.Serialize(new Response { Status = "4 Bad Request: invalid json format" });
         }
         catch (Exception ex)
         {
-            // Handle unexpected errors
-            var errorResponse = new Response { Status = $"6 Error: unexpected error - {ex.Message}", Body = null };
-            return JsonSerializer.Serialize(errorResponse);
+            return JsonSerializer.Serialize(new Response { Status = $"6 Error: unexpected error - {ex.Message}" });
         }
     }
+
 
     // Validate fields and accumulate error messages
     public static Response Validate(Dictionary<string, object> requestData)
@@ -205,6 +240,84 @@ class Program
             return false; // If deserialization fails, it's not a valid JSON object
         }
     }
+    static Response CreateCategory(Dictionary<string, object> requestData)
+    {
+        if (!requestData.ContainsKey("body") || !IsValidJsonObject(requestData["body"].ToString()))
+            return new Response { Status = "4 Bad Request: missing or invalid body" };
+
+        var newCategory = JsonSerializer.Deserialize<Dictionary<string, object>>(requestData["body"].ToString());
+        newCategory["cid"] = categories.Count + 1;
+        categories.Add(newCategory);
+
+        return new Response { Status = "2 Created", Body = newCategory };
+    }
+    static Response ReadCategory(string path)
+    {
+        if (path == "/api/categories")
+            return new Response { Status = "1 Ok", Body = categories };
+
+        if (path.StartsWith("/api/categories/"))
+        {
+            var idStr = path.Substring("/api/categories/".Length);
+            if (int.TryParse(idStr, out int cid))
+            {
+                var category = categories.Find(c => (int)c["cid"] == cid);
+                if (category != null)
+                    return new Response { Status = "1 Ok", Body = category };
+                return new Response { Status = "5 Not Found" };
+            }
+        }
+
+        return new Response { Status = "4 Bad Request" };
+    }
+    static Response UpdateCategory(string path, Dictionary<string, object> requestData)
+    {
+        if (!path.StartsWith("/api/categories/"))
+            return new Response { Status = "4 Bad Request" };
+
+        if (!requestData.ContainsKey("body") || !IsValidJsonObject(requestData["body"].ToString()))
+            return new Response { Status = "4 Bad Request: missing or invalid body" };
+
+        var idStr = path.Substring("/api/categories/".Length);
+        if (int.TryParse(idStr, out int cid))
+        {
+            var category = categories.Find(c => (int)c["cid"] == cid);
+            if (category != null)
+            {
+                var updatedCategory = JsonSerializer.Deserialize<Dictionary<string, object>>(requestData["body"].ToString());
+                category["name"] = updatedCategory["name"];
+                return new Response { Status = "3 Updated" };
+            }
+            return new Response { Status = "5 Not Found" };
+        }
+
+        return new Response { Status = "4 Bad Request: invalid id" };
+    }
+    static Response DeleteCategory(string path)
+    {
+        if (!path.StartsWith("/api/categories/"))
+            return new Response { Status = "4 Bad Request" };
+
+        var idStr = path.Substring("/api/categories/".Length);
+        if (int.TryParse(idStr, out int cid))
+        {
+            var category = categories.Find(c => (int)c["cid"] == cid);
+            if (category != null)
+            {
+                categories.Remove(category);
+                return new Response { Status = "1 Ok" };
+            }
+            return new Response { Status = "5 Not Found" };
+        }
+
+        return new Response { Status = "4 Bad Request: invalid id" };
+    }
+
+
+
+
+
+
 }
 
 

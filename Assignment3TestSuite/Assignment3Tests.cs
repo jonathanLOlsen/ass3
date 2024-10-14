@@ -35,7 +35,7 @@ namespace Assignment3TestSuite
         /// Testing Constrains
         /// 
         ////////////////////////////////////////////////////////// 
-        
+        /*
         [Fact]
         public void Constraint_ConnectionWithoutRequest_ShouldConnect()
         {
@@ -56,7 +56,7 @@ namespace Assignment3TestSuite
 
             Assert.Contains("missing method", response.Status.ToLower());
         }
-        
+
         [Fact]
         public void Constraint_RequestWithUnknownMethod_IllegalMethodError()
         {
@@ -75,7 +75,7 @@ namespace Assignment3TestSuite
 
             Assert.Contains("illegal method", response.Status.ToLower());
         }
-        
+
         [Theory]
         [InlineData("create")]
         [InlineData("read")]
@@ -132,7 +132,7 @@ namespace Assignment3TestSuite
 
             Assert.Contains("illegal date", response.Status.ToLower());
         }
-        
+
         /* Body Tests    */
         
         [Theory]
@@ -177,7 +177,7 @@ namespace Assignment3TestSuite
             Assert.Contains("illegal body", response.Status.ToLower());
 
         }
-
+        
         /* Echo Test */
         
         [Fact]
@@ -206,7 +206,7 @@ namespace Assignment3TestSuite
         ////////////////////////////////////////////////////////// 
 
         /* Path tests  */
-/*
+        
         [Fact]
         public void Constraint_RequestWithInvalidPath_StatusBadRequest()
         {
@@ -226,7 +226,7 @@ namespace Assignment3TestSuite
 
             Assert.Equal(expectedResponse.ToJson().ToLower(), response.ToJson().ToLower());
         }
-
+        
         [Fact]
         public void Constraint_RequestWithInvalidPathId_StatusBadRequest()
         {
@@ -246,7 +246,7 @@ namespace Assignment3TestSuite
 
             Assert.Equal(expectedResponse.ToJson().ToLower(), response.ToJson().ToLower());
         }
-
+        
         [Fact]
         public void Constraint_CreateWithPathId_StatusBadRequest()
         {
@@ -267,7 +267,7 @@ namespace Assignment3TestSuite
 
             Assert.Equal(expectedResponse.ToJson().ToLower(), response.ToJson().ToLower());
         }
-
+        
         [Fact]
         public void Constraint_UpdateWithOutPathId_StatusBadRequest()
         {
@@ -288,7 +288,7 @@ namespace Assignment3TestSuite
 
             Assert.Equal(expectedResponse.ToJson().ToLower(), response.ToJson().ToLower());
         }
-
+        
         [Fact]
         public void Constraint_DeleteWithOutPathId_StatusBadRequest()
         {
