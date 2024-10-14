@@ -132,7 +132,7 @@ namespace Assignment3TestSuite
 
             Assert.Contains("illegal date", response.Status.ToLower());
         }
-
+        
         /* Body Tests    */
         
         [Theory]
@@ -179,7 +179,8 @@ namespace Assignment3TestSuite
         }
 
         /* Echo Test */
-     /*   [Fact]
+        
+        [Fact]
         public void Echo_RequestWithBody_ReturnsBody()
         {
             var client = Connect();

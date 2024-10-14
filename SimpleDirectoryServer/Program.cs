@@ -73,6 +73,7 @@ class Program
                 return JsonSerializer.Serialize(new Response { Status = "4 Bad Request: missing method, missing date", Body = null });
             }
 
+
             // Debugging: Check parsed request data
             Console.WriteLine("Parsed request data: " + JsonSerializer.Serialize(requestData));
 
@@ -101,6 +102,7 @@ class Program
     {
         var errors = new List<string>();
 
+
         // Check if "method" is present and valid
         if (!requestData.ContainsKey("method") || string.IsNullOrWhiteSpace(requestData["method"]?.ToString()))
         {
@@ -111,6 +113,18 @@ class Program
             errors.Add("illegal method");
         }
         string method = requestData["method"]?.ToString().ToLower();
+
+        // Special handling for "echo" method: Return the body as-is if it's present, but require body to be there
+        if (method == "echo" && !requestData.ContainsKey("body"))
+        {
+            errors.Add("missing body");
+        }
+        else if (method == "echo")
+        {
+            // If "echo" has a body, return it as the response immediately
+            var responseBody = requestData["body"];
+            return new Response { Status = "1 Ok", Body = responseBody };
+        }
 
         // Check if "path" (resource) is required and present for certain methods
         if ((method == "create" || method == "read" || method == "update" || method == "delete") &&
@@ -142,7 +156,7 @@ class Program
         }
 
         // Check if "body" is required for specific methods and is present
-        if ((method == "create" || method == "update" || method == "echo"))
+        if ((method == "create" || method == "update"))
         {
             if (!requestData.ContainsKey("body"))
             {
