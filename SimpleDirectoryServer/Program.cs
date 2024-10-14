@@ -242,19 +242,32 @@ class Program
     }
     static Response CreateCategory(Dictionary<string, object> requestData)
     {
+        // Check if the "body" is provided and is a valid JSON object
         if (!requestData.ContainsKey("body") || !IsValidJsonObject(requestData["body"].ToString()))
             return new Response { Status = "4 Bad Request: missing or invalid body" };
 
-        var newCategory = JsonSerializer.Deserialize<Dictionary<string, object>>(requestData["body"].ToString());
-        newCategory["cid"] = categories.Count + 1;
+        // Deserialize the body to retrieve the name field
+        var newCategoryData = JsonSerializer.Deserialize<Dictionary<string, object>>(requestData["body"].ToString());
+        if (!newCategoryData.ContainsKey("name"))
+            return new Response { Status = "4 Bad Request: missing name in body" };
+
+        // Create a new category with an incremented ID and provided name
+        int newId = categories.Count + 1;
+        var newCategory = new Dictionary<string, object> { { "cid", newId }, { "name", newCategoryData["name"] } };
         categories.Add(newCategory);
 
-        return new Response { Status = "2 Created", Body = newCategory };
+        // Return response with "2 Created" status and the new category as the body
+        return new Response { Status = "2 Created", Body = JsonSerializer.Serialize(newCategory) };
     }
+
     static Response ReadCategory(string path)
     {
         if (path == "/api/categories")
-            return new Response { Status = "1 Ok", Body = categories };
+        {
+            // Serialize categories list to JSON string to match expected format
+            string categoriesJson = JsonSerializer.Serialize(categories);
+            return new Response { Status = "1 Ok", Body = categoriesJson };
+        }
 
         if (path.StartsWith("/api/categories/"))
         {
@@ -263,13 +276,14 @@ class Program
             {
                 var category = categories.Find(c => (int)c["cid"] == cid);
                 if (category != null)
-                    return new Response { Status = "1 Ok", Body = category };
+                    return new Response { Status = "1 Ok", Body = JsonSerializer.Serialize(category) };
                 return new Response { Status = "5 Not Found" };
             }
         }
 
         return new Response { Status = "4 Bad Request" };
     }
+
     static Response UpdateCategory(string path, Dictionary<string, object> requestData)
     {
         if (!path.StartsWith("/api/categories/"))
