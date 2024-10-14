@@ -75,7 +75,6 @@ namespace Assignment3TestSuite
 
             Assert.Contains("illegal method", response.Status.ToLower());
         }
-
         
         [Theory]
         [InlineData("create")]
@@ -101,7 +100,7 @@ namespace Assignment3TestSuite
         }
         
         /* Date Tests    */
-/*
+        
         [Fact]
         public void Constraint_RequestWithoutDate_MissingDateError()
         {
@@ -113,6 +112,7 @@ namespace Assignment3TestSuite
 
             Assert.Contains("missing date", response.Status.ToLower());
         }
+
 
         [Fact]
         public void Constraint_RequestWhereDateIsNotUnixTime_IllegalDateError()
@@ -134,7 +134,7 @@ namespace Assignment3TestSuite
         }
 
         /* Body Tests    */
-/*
+        
         [Theory]
         [InlineData("create")]
         [InlineData("update")]
@@ -179,7 +179,7 @@ namespace Assignment3TestSuite
         }
 
         /* Echo Test */
-/*        [Fact]
+     /*   [Fact]
         public void Echo_RequestWithBody_ReturnsBody()
         {
             var client = Connect();
