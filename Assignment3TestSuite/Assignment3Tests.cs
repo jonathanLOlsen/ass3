@@ -35,7 +35,7 @@ namespace Assignment3TestSuite
         /// Testing Constrains
         /// 
         ////////////////////////////////////////////////////////// 
-        /*
+        
         [Fact]
         public void Constraint_ConnectionWithoutRequest_ShouldConnect()
         {
